@@ -1,4 +1,4 @@
-"""应用异常层次结构和统一异常处理器。"""
+"""应用异常层级与统一异常处理器。"""
 
 from typing import Any
 
@@ -11,16 +11,17 @@ from app.core.response import error
 
 
 class AppException(Exception):
-    """基础应用异常，包含状态、消息和 HTTP 状态码。"""
+    """应用异常基类，携带 message、HTTP 状态码和可选 data。
+
+    业务失败时响应体的 status 恒为 0，具体错误类型由 HTTP 状态码区分。
+    """
 
     def __init__(
         self,
-        status: int = 1,
         message: str = "Internal error",
         status_code: int = 500,
         data: Any = None,
     ) -> None:
-        self.status = status
         self.message = message
         self.status_code = status_code
         self.data = data
@@ -29,32 +30,32 @@ class AppException(Exception):
 
 class UnauthorizedException(AppException):
     def __init__(self, message: str = "Not authenticated") -> None:
-        super().__init__(status=401, message=message, status_code=401)
+        super().__init__(message=message, status_code=401)
 
 
 class ForbiddenException(AppException):
     def __init__(self, message: str = "Permission denied") -> None:
-        super().__init__(status=403, message=message, status_code=403)
+        super().__init__(message=message, status_code=403)
 
 
 class NotFoundException(AppException):
     def __init__(self, message: str = "Resource not found") -> None:
-        super().__init__(status=404, message=message, status_code=404)
+        super().__init__(message=message, status_code=404)
 
 
 class ConflictException(AppException):
     def __init__(self, message: str = "Resource conflict") -> None:
-        super().__init__(status=409, message=message, status_code=409)
+        super().__init__(message=message, status_code=409)
 
 
 class BadRequestException(AppException):
     def __init__(self, message: str = "Bad request") -> None:
-        super().__init__(status=400, message=message, status_code=400)
+        super().__init__(message=message, status_code=400)
 
 
 class RateLimitException(AppException):
     def __init__(self, message: str = "Too many requests") -> None:
-        super().__init__(status=429, message=message, status_code=429)
+        super().__init__(message=message, status_code=429)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -66,7 +67,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
-            content=error(exc.status, exc.message, exc.data),
+            content=error(exc.message, exc.data),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -75,7 +76,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=422,
-            content=error(422, "Validation error", exc.errors()),
+            content=error("Validation error", exc.errors()),
         )
 
     @app.exception_handler(IntegrityError)
@@ -84,7 +85,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=409,
-            content=error(409, "Data integrity conflict"),
+            content=error("Data integrity conflict"),
         )
 
     @app.exception_handler(Exception)
@@ -93,5 +94,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=500,
-            content=error(500, "Internal server error"),
+            content=error("Internal server error"),
         )

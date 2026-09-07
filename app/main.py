@@ -80,7 +80,7 @@ def create_app() -> FastAPI:
     @app.get("/health/live", response_model=ApiResponse[dict], tags=["health"])
     async def health_live() -> dict:
         """存活探针：应用进程正在运行。"""
-        return {"status": 0, "message": "success", "data": {"status": "alive"}}
+        return {"status": 1, "message": "success", "data": {"status": "alive"}}
 
     @app.get("/health/ready", response_model=ApiResponse[dict], tags=["health"])
     async def health_ready() -> dict:
@@ -109,7 +109,7 @@ def create_app() -> FastAPI:
 
         all_ok = all(v == "ok" for v in checks.values())
         return {
-            "status": 0 if all_ok else 503,
+            "status": 1 if all_ok else 0,
             "message": "ready" if all_ok else "not ready",
             "data": checks,
         }
@@ -118,7 +118,7 @@ def create_app() -> FastAPI:
     async def root() -> dict:
         """根端点，返回 API 信息。"""
         return {
-            "status": 0,
+            "status": 1,
             "message": "success",
             "data": {
                 "name": "FastAPI Template",

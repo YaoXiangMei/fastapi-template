@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
@@ -33,18 +33,13 @@ def get_page_params(
     return PageParams(page=page, page_size=page_size)
 
 
-class PageResponse(BaseModel, Generic[T]):
-    """封装在 ApiResponse 中的统一分页响应。"""
-
-    status: int = 0
-    message: str = "success"
-    data: "PageData[T] | None" = None
-
-
 class PageData(BaseModel, Generic[T]):
-    """分页数据负载。"""
+    """分页数据负载，统一作为 ApiResponse 的 data 字段。
 
-    items: list[T]
+    用法：response_model=ApiResponse[PageData[UserRead]]
+    """
+
+    data: list[T]
     total: int
     page: int
     page_size: int

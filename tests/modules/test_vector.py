@@ -15,7 +15,7 @@ async def test_create_document(auth_client: AsyncClient):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["title"] == "FastAPI Guide"
     assert "id" in body["data"]
 
@@ -31,8 +31,8 @@ async def test_list_documents(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/documents")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
-    assert "items" in body["data"]
+    assert body["status"] == 1
+    assert "data" in body["data"]
     assert body["data"]["total"] >= 1
 
 
@@ -60,7 +60,7 @@ async def test_search_documents(auth_client: AsyncClient):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert isinstance(body["data"], list)
     assert len(body["data"]) > 0
     # 结果应包含 score 字段

@@ -9,7 +9,7 @@ async def test_health_live(client: AsyncClient):
     resp = await client.get("/health/live")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["status"] == "alive"
 
 
@@ -18,7 +18,7 @@ async def test_root(client: AsyncClient):
     resp = await client.get("/")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["name"] == "FastAPI Template"
 
 

@@ -9,8 +9,8 @@ async def test_list_users_as_superuser(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/users")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
-    assert "items" in body["data"]
+    assert body["status"] == 1
+    assert "data" in body["data"]
     assert "total" in body["data"]
     assert "page" in body["data"]
     assert "page_size" in body["data"]
@@ -28,7 +28,7 @@ async def test_create_user_as_superuser(auth_client: AsyncClient):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["email"] == "managed@example.com"
 
 
@@ -56,5 +56,5 @@ async def test_list_roles(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/roles")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert isinstance(body["data"], list)

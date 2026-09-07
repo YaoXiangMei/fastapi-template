@@ -125,17 +125,17 @@ app/
 
 ```json
 {
-  "status": 0,
+  "status": 1,
   "message": "success",
   "data": { ... }
 }
 ```
 
-错误响应遵循相同格式，但 status 为非零值：
+错误响应遵循相同格式，status 固定为 0（具体错误类型由 HTTP 状态码区分）：
 
 ```json
 {
-  "status": 404,
+  "status": 0,
   "message": "User not found",
   "data": null
 }
@@ -145,10 +145,10 @@ app/
 
 ```json
 {
-  "status": 0,
+  "status": 1,
   "message": "success",
   "data": {
-    "items": [ ... ],
+    "data": [ ... ],
     "total": 100,
     "page": 1,
     "page_size": 20

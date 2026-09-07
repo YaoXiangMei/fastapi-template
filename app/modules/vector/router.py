@@ -30,7 +30,7 @@ async def create_document(
     """创建文档。向量嵌入根据内容自动生成。"""
     doc = await service.create_document(db, data)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": DocumentRead.model_validate(doc),
     }
@@ -46,10 +46,10 @@ async def list_documents(
         db, page_params.offset, page_params.limit
     )
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": {
-            "items": [DocumentRead.model_validate(d) for d in docs],
+            "data": [DocumentRead.model_validate(d) for d in docs],
             "total": total,
             "page": page_params.page,
             "page_size": page_params.page_size,
@@ -65,7 +65,7 @@ async def get_document(
 ) -> dict:
     doc = await service.get_document(db, doc_id)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": DocumentRead.model_validate(doc),
     }
@@ -78,7 +78,7 @@ async def delete_document(
     _: User = Depends(get_current_user),
 ) -> dict:
     await service.delete_document(db, doc_id)
-    return {"status": 0, "message": "success", "data": None}
+    return {"status": 1, "message": "success", "data": None}
 
 
 @router.post("/search", response_model=ApiResponse[list[SearchResult]])
@@ -90,7 +90,7 @@ async def search_documents(
     """按语义相似度检索文档。"""
     results = await service.search_documents(db, data.query, data.top_k)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": results,
     }

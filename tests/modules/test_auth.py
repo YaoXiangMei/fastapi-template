@@ -16,7 +16,7 @@ async def test_register(client: AsyncClient):
     )
     assert resp.status_code == 201
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["email"] == "newuser@example.com"
     assert body["data"]["is_active"] is True
     assert body["data"]["is_superuser"] is False
@@ -40,7 +40,7 @@ async def test_register_duplicate_email(client: AsyncClient, db_session):
     )
     assert resp.status_code == 409
     body = resp.json()
-    assert body["status"] == 409
+    assert body["status"] == 0
     assert "already registered" in body["message"]
 
 
@@ -63,7 +63,7 @@ async def test_login_success(client: AsyncClient, db_session):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert "access_token" in body["data"]
     assert "refresh_token" in body["data"]
     assert body["data"]["token_type"] == "bearer"
@@ -87,7 +87,7 @@ async def test_login_wrong_password(client: AsyncClient, db_session):
         data={"username": "wrongpw@example.com", "password": "wrongpass"},
     )
     assert resp.status_code == 401
-    assert resp.json()["status"] == 401
+    assert resp.json()["status"] == 0
 
 
 @pytest.mark.asyncio
@@ -102,7 +102,7 @@ async def test_protected_endpoint_with_token(client: AsyncClient, auth_token):
     resp = await client.get("/api/v1/users/me")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 0
+    assert body["status"] == 1
     assert body["data"]["email"] == "testuser@example.com"
 
 
@@ -147,4 +147,4 @@ async def test_unified_error_format(client: AsyncClient):
     body = resp.json()
     assert "status" in body
     assert "message" in body
-    assert body["status"] != 0
+    assert body["status"] == 0

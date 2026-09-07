@@ -28,7 +28,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me", response_model=ApiResponse[UserRead])
 async def get_me(current_user: User = Depends(get_current_user)) -> dict:
-    return {"status": 0, "message": "success", "data": UserRead.model_validate(current_user)}
+    return {"status": 1, "message": "success", "data": UserRead.model_validate(current_user)}
 
 
 # ── 用户管理（仅超级用户）──
@@ -41,10 +41,10 @@ async def list_users(
 ) -> dict:
     users, total = await service.list_users(db, page_params.offset, page_params.limit)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": {
-            "items": [UserRead.model_validate(u) for u in users],
+            "data": [UserRead.model_validate(u) for u in users],
             "total": total,
             "page": page_params.page,
             "page_size": page_params.page_size,
@@ -59,7 +59,7 @@ async def create_user(
     _: User = Depends(get_current_superuser),
 ) -> dict:
     user = await service.create_user(db, data)
-    return {"status": 0, "message": "success", "data": UserRead.model_validate(user)}
+    return {"status": 1, "message": "success", "data": UserRead.model_validate(user)}
 
 
 @router.patch("/{user_id}", response_model=ApiResponse[UserRead])
@@ -70,7 +70,7 @@ async def update_user(
     _: User = Depends(get_current_superuser),
 ) -> dict:
     user = await service.update_user(db, user_id, data)
-    return {"status": 0, "message": "success", "data": UserRead.model_validate(user)}
+    return {"status": 1, "message": "success", "data": UserRead.model_validate(user)}
 
 
 @router.post("/{user_id}/roles", response_model=ApiResponse[UserRead])
@@ -81,7 +81,7 @@ async def assign_roles(
     _: User = Depends(get_current_superuser),
 ) -> dict:
     user = await service.assign_roles(db, user_id, data.role_ids)
-    return {"status": 0, "message": "success", "data": UserRead.model_validate(user)}
+    return {"status": 1, "message": "success", "data": UserRead.model_validate(user)}
 
 
 # ── 角色 ──
@@ -96,7 +96,7 @@ async def list_roles(
 ) -> dict:
     roles = await service.list_roles(db)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": [RoleRead.model_validate(r) for r in roles],
     }
@@ -109,7 +109,7 @@ async def create_role(
     _: User = Depends(get_current_superuser),
 ) -> dict:
     role = await service.create_role(db, data)
-    return {"status": 0, "message": "success", "data": RoleRead.model_validate(role)}
+    return {"status": 1, "message": "success", "data": RoleRead.model_validate(role)}
 
 
 @roles_router.delete("/{role_id}", response_model=ApiResponse[None])
@@ -119,7 +119,7 @@ async def delete_role(
     _: User = Depends(get_current_superuser),
 ) -> dict:
     await service.delete_role(db, role_id)
-    return {"status": 0, "message": "success", "data": None}
+    return {"status": 1, "message": "success", "data": None}
 
 
 # ── 权限 ──
@@ -134,7 +134,7 @@ async def list_permissions(
 ) -> dict:
     perms = await service.list_permissions(db)
     return {
-        "status": 0,
+        "status": 1,
         "message": "success",
         "data": [PermissionRead.model_validate(p) for p in perms],
     }

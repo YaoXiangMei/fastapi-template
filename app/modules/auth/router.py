@@ -28,7 +28,7 @@ async def register(
         db,
         UserCreate(email=data.email, password=data.password, full_name=data.full_name),
     )
-    return {"status": 0, "message": "success", "data": UserRead.model_validate(user)}
+    return {"status": 1, "message": "success", "data": UserRead.model_validate(user)}
 
 
 @router.post(
@@ -42,7 +42,7 @@ async def login(
 ) -> dict:
     """使用邮箱 + 密码登录。返回访问令牌和刷新令牌。"""
     tokens = await service.login(db, form.username, form.password)
-    return {"status": 0, "message": "success", "data": tokens}
+    return {"status": 1, "message": "success", "data": tokens}
 
 
 @router.post("/refresh", response_model=ApiResponse[TokenResponse])
@@ -52,7 +52,7 @@ async def refresh(
 ) -> dict:
     """轮换刷新令牌并返回新的令牌对。"""
     tokens = await service.refresh(db, data.refresh_token)
-    return {"status": 0, "message": "success", "data": tokens}
+    return {"status": 1, "message": "success", "data": tokens}
 
 
 @router.post("/logout", response_model=ApiResponse[None])
@@ -62,4 +62,4 @@ async def logout(
 ) -> dict:
     """吊销刷新令牌。"""
     await service.logout(db, data.refresh_token)
-    return {"status": 0, "message": "success", "data": None}
+    return {"status": 1, "message": "success", "data": None}

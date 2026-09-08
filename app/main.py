@@ -54,7 +54,6 @@ def create_app() -> FastAPI:
         ),
         version="0.1.0",
         lifespan=lifespan,
-        default_response_class=None,
     )
 
     # ── 中间件（顺序：最后添加的为最外层）──

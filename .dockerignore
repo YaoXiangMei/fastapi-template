@@ -17,7 +17,8 @@ venv
 env
 tests
 *.md
-docker
+docker/*
+!docker/entrypoint.sh
 docker-compose.yml
 .env
 .env.*

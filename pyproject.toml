@@ -17,6 +17,7 @@ dependencies = [
     "alembic>=1.13.0",
     # pgvector
     "pgvector>=0.3.0",
+    "numpy>=1.26.0",
     # Redis
     "redis[hiredis]>=5.0.0",
     # Celery
@@ -26,6 +27,7 @@ dependencies = [
     "pwdlib[argon2]>=0.2.0",
     # Config
     "pydantic-settings>=2.4.0",
+    "pydantic[email]>=2.9.0",
     # Logging
     "loguru>=0.7.0",
     # Monitoring

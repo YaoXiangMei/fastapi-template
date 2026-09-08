@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.core.database import async_session_factory
 from app.core.logging import logger, setup_logging
 from app.core.security import hash_password
-from app.modules.user.models import Permission, Role, User
+from app.modules.user.models import Permission, Role, User, role_permission
 from app.modules.user.service import get_user_by_email
 
 
@@ -57,7 +57,21 @@ async def seed_roles(db) -> None:
         db.add(admin_role)
         await db.flush()
         logger.info("Created role: admin")
-    admin_role.permissions = all_perms
+    
+    # 为管理员角色分配权限（通过直接添加到关联表）
+    for perm in all_perms:
+        # 检查权限是否已分配给角色
+        stmt = select(role_permission).where(
+            role_permission.c.role_id == admin_role.id,
+            role_permission.c.permission_id == perm.id
+        )
+        result = await db.execute(stmt)
+        if not result.first():
+            # 如果权限未分配，则添加关联
+            await db.execute(role_permission.insert().values(
+                role_id=admin_role.id,
+                permission_id=perm.id
+            ))
 
     # 用户角色：只读权限
     result = await db.execute(select(Role).where(Role.code == "user"))
@@ -73,7 +87,20 @@ async def seed_roles(db) -> None:
         logger.info("Created role: user")
 
     read_perms = [p for p in all_perms if p.code.endswith(":read") or p.code.endswith(":search")]
-    user_role.permissions = read_perms
+    # 为用户角色分配只读权限
+    for perm in read_perms:
+        # 检查权限是否已分配给角色
+        stmt = select(role_permission).where(
+            role_permission.c.role_id == user_role.id,
+            role_permission.c.permission_id == perm.id
+        )
+        result = await db.execute(stmt)
+        if not result.first():
+            # 如果权限未分配，则添加关联
+            await db.execute(role_permission.insert().values(
+                role_id=user_role.id,
+                permission_id=perm.id
+            ))
 
     await db.commit()
 

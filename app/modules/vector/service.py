@@ -53,9 +53,7 @@ async def delete_document(db: AsyncSession, doc_id: UUID) -> None:
     await db.flush()
 
 
-async def search_documents(
-    db: AsyncSession, query: str, top_k: int = 5
-) -> list[dict]:
+async def search_documents(db: AsyncSession, query: str, top_k: int = 5) -> list[dict]:
     """按余弦相似度检索文档。
 
     返回包含 id、title、content、score（距离）的字典列表。

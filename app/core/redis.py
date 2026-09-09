@@ -22,7 +22,7 @@ async def close_redis() -> None:
     """关闭 Redis 连接池。在应用生命周期关闭时调用。"""
     global _redis
     if _redis is not None:
-        await _redis.aclose()
+        await _redis.close()  # type: ignore[attr-defined]
         _redis = None
 
 

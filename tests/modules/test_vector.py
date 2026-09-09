@@ -43,7 +43,9 @@ async def test_search_documents(auth_client: AsyncClient):
         "/api/v1/documents",
         json={
             "title": "Python Guide",
-            "content": "Python is a programming language great for data science and web development.",
+            "content": (
+                "Python is a programming language great for data science and web development."
+            ),
         },
     )
     await auth_client.post(

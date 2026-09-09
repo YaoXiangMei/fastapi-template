@@ -36,6 +36,7 @@ async def create_permission(
     """创建权限。需要超级管理员权限。"""
     if not current_admin.is_superuser:
         from app.core.exceptions import ForbiddenException
+
         raise ForbiddenException("需要超级管理员权限")
 
     perm = await rbac_service.create_permission(db, data)
@@ -49,7 +50,11 @@ async def list_permissions(
 ):
     """列出所有权限。"""
     perms = await rbac_service.list_permissions(db)
-    return {"status": 1, "message": "success", "data": [PermissionRead.model_validate(p) for p in perms]}
+    return {
+        "status": 1,
+        "message": "success",
+        "data": [PermissionRead.model_validate(p) for p in perms],
+    }
 
 
 # ── 角色管理 ──
@@ -64,6 +69,7 @@ async def create_role(
     """创建角色。需要超级管理员权限。"""
     if not current_admin.is_superuser:
         from app.core.exceptions import ForbiddenException
+
         raise ForbiddenException("需要超级管理员权限")
 
     role = await rbac_service.create_role(db, data)
@@ -90,6 +96,7 @@ async def assign_permissions(
     """给角色分配权限。需要超级管理员权限。"""
     if not current_admin.is_superuser:
         from app.core.exceptions import ForbiddenException
+
         raise ForbiddenException("需要超级管理员权限")
 
     role = await rbac_service.assign_permissions_to_role(db, role_id, data.permission_ids)
@@ -107,6 +114,7 @@ async def list_admins(
     """列出所有管理员。需要超级管理员权限。"""
     if not current_admin.is_superuser:
         from app.core.exceptions import ForbiddenException
+
         raise ForbiddenException("需要超级管理员权限")
 
     result = await db.execute(select(Admin))
@@ -138,6 +146,7 @@ async def assign_roles(
     """给管理员分配角色。需要超级管理员权限。"""
     if not current_admin.is_superuser:
         from app.core.exceptions import ForbiddenException
+
         raise ForbiddenException("需要超级管理员权限")
 
     admin = await rbac_service.assign_roles_to_admin(db, admin_id, data.role_ids)

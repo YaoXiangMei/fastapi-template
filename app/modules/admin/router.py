@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
+from app.core.schemas import RefreshRequest, TokenResponse
 from app.modules.admin import service
 from app.modules.admin.deps import get_current_admin, require_admin
 from app.modules.admin.models import Admin
 from app.modules.admin.schemas import AdminRead
-from app.core.schemas import RefreshRequest, TokenResponse
 
 router = APIRouter()
 
@@ -45,8 +45,6 @@ async def get_me(current_admin: Admin = Depends(get_current_admin)):
 
 # 测试端点：演示权限检查（生产环境可移除）
 @router.get("/test-permission")
-async def test_permission_endpoint(
-    _: Admin = Depends(require_admin("doctor:view"))
-):
+async def test_permission_endpoint(_: Admin = Depends(require_admin("doctor:view"))):
     """测试权限检查的端点。需要 doctor:view 权限。"""
     return {"status": 1, "message": "success", "data": {"message": "有权限访问"}}

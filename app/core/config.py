@@ -28,9 +28,7 @@ class Settings(BaseSettings):
         return self.ENV == "production"
 
     # ── 数据库 ──
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/fastapi_template"
-    )
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/fastapi_template"
 
     # ── Redis ──
     REDIS_URL: str = "redis://localhost:6379/0"

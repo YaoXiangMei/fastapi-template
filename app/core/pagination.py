@@ -1,10 +1,10 @@
 """分页依赖和响应模式。"""
 
 from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 from fastapi import Query
 from pydantic import BaseModel
-from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -33,7 +33,7 @@ def get_page_params(
     return PageParams(page=page, page_size=page_size)
 
 
-class PageData(BaseModel, Generic[T]):
+class PageData(BaseModel, Generic[T]):  # noqa: UP046
     """分页数据负载，统一作为 ApiResponse 的 data 字段。
 
     用法：response_model=ApiResponse[PageData[UserRead]]

@@ -1,6 +1,7 @@
 """Celery 任务定义。"""
 
 import asyncio
+from datetime import UTC
 
 from app.worker.celery_app import celery_app
 
@@ -51,9 +52,9 @@ def cleanup_expired_tokens() -> str:
 @celery_app.task(name="app.worker.tasks.health_check")
 def health_check() -> str:
     """用于监控的简单心跳任务。"""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    ts = datetime.now(timezone.utc).isoformat()
+    ts = datetime.now(UTC).isoformat()
     print(f"[Celery Task] Health check at {ts}")
     return ts
 
@@ -64,9 +65,6 @@ def process_document_embedding(document_id: str, content: str) -> dict:
     from app.modules.vector.embeddings import generate_embedding
 
     embedding = generate_embedding(content)
-    print(
-        f"[Celery Task] Generated embedding for document {document_id} "
-        f"(dim={len(embedding)})"
-    )
+    print(f"[Celery Task] Generated embedding for document {document_id} (dim={len(embedding)})")
     # 生产环境中：用嵌入向量更新数据库中的文档
     return {"document_id": document_id, "embedding_dim": len(embedding)}

@@ -12,7 +12,6 @@ from app.core.database import async_session_factory
 from app.core.logging import logger
 from app.modules.admin.models import AdminPermission
 
-
 # 预定义权限
 PERMISSIONS = [
     # 医生管理
@@ -39,9 +38,7 @@ async def seed_permissions():
     async with async_session_factory() as db:
         for code, name, description in PERMISSIONS:
             # 检查是否已存在
-            result = await db.execute(
-                select(AdminPermission).where(AdminPermission.code == code)
-            )
+            result = await db.execute(select(AdminPermission).where(AdminPermission.code == code))
             existing = result.scalar_one_or_none()
 
             if existing:

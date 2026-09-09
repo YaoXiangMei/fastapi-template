@@ -1,7 +1,6 @@
 """通用认证依赖工厂。"""
 
-from collections.abc import Callable
-from typing import Type
+from collections.abc import Callable as CallableType
 from uuid import UUID
 
 import jwt
@@ -16,11 +15,11 @@ from app.core.security import decode_token
 
 
 def create_auth_dependency(
-    model: Type,
+    model: type,
     token_url: str,
     scheme_name: str | None = None,
     require_permissions: list[str] | None = None,
-) -> tuple[OAuth2PasswordBearer, Callable]:
+) -> tuple[OAuth2PasswordBearer, CallableType]:
     """为特定角色创建 OAuth2 认证依赖。
 
     Args:
@@ -49,8 +48,8 @@ def create_auth_dependency(
     ):
         try:
             payload = decode_token(token)
-        except jwt.PyJWTError:
-            raise UnauthorizedException("Invalid or expired token")
+        except jwt.PyJWTError as err:
+            raise UnauthorizedException("Invalid or expired token") from err
 
         if payload.get("type") != "access":
             raise UnauthorizedException("Invalid token type")
@@ -61,10 +60,10 @@ def create_auth_dependency(
 
         try:
             user_uuid = UUID(user_id)
-        except (ValueError, AttributeError):
-            raise UnauthorizedException("Invalid token")
+        except (ValueError, AttributeError) as err:
+            raise UnauthorizedException("Invalid token") from err
 
-        result = await db.execute(select(model).where(model.id == user_uuid))
+        result = await db.execute(select(model).where(model.id == user_uuid))  # type: ignore[var-annotated,attr-defined]
         user = result.scalar_one_or_none()
 
         if not user:
@@ -74,23 +73,23 @@ def create_auth_dependency(
             raise UnauthorizedException("Account is disabled")
 
         if hasattr(user, "is_verified") and not user.is_verified:
-            raise UnauthorizedException(
-                "Account not verified, please wait for admin approval"
-            )
+            raise UnauthorizedException("Account not verified, please wait for admin approval")
 
         # 权限检查（仅 Admin 支持）
-        if require_permissions and model.__name__ == "Admin":
-            # 超级管理员跳过权限检查
-            if not getattr(user, "is_superuser", False):
-                from app.modules.admin.rbac_service import get_admin_permissions
+        if (
+            require_permissions
+            and model.__name__ == "Admin"
+            and not getattr(user, "is_superuser", False)
+        ):
+            from app.modules.admin.rbac_service import get_admin_permissions
 
-                user_perms = await get_admin_permissions(db, user.id)
-                if not set(require_permissions).issubset(user_perms):
-                    from app.core.exceptions import ForbiddenException
+            user_perms = await get_admin_permissions(db, user.id)
+            if not set(require_permissions).issubset(user_perms):
+                from app.core.exceptions import ForbiddenException
 
-                    raise ForbiddenException(
-                        f"权限不足，需要: {', '.join(require_permissions)}"
-                    )
+                raise ForbiddenException(
+                    f"权限不足，需要: {', '.join(require_permissions)}"
+                ) from None
 
         return user
 

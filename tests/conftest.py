@@ -1,25 +1,29 @@
 """Pytest fixtures：测试数据库引擎/会话、fakeredis 和异步 HTTP 客户端。"""
 
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import fakeredis.aioredis
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from pgvector.sqlalchemy import Vector  # noqa: F401 - 为 create_all 注册类型
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.database import Base, get_db
-from app.core.redis import get_redis
 from app.main import app
 
 # 导入所有模型以创建表
-from app.modules.admin.models import Admin, AdminRole, AdminPermission, admin_role_assignments, admin_role_permissions  # noqa: F401
+from app.modules.admin.models import (  # noqa: F401
+    Admin,
+    AdminPermission,
+    AdminRole,
+    admin_role_assignments,
+    admin_role_permissions,
+)
 from app.modules.doctor.models import Doctor  # noqa: F401
 from app.modules.patient.models import Patient  # noqa: F401
 from app.modules.vector.models import Document  # noqa: F401
-from pgvector.sqlalchemy import Vector  # noqa: F401 - 为 create_all 注册类型
 
 # 测试数据库 URL（使用单独的测试数据库或内存数据库）
 TEST_DATABASE_URL = os.getenv(
@@ -36,11 +40,12 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
 
 # 重新导入 settings 以应用测试环境
-from app.core.config import Settings
-from app.core import redis as redis_module
-from app.core import config as config_module
+from app.core import config as config_module  # noqa: E402
+from app.core import database as database_module  # noqa: E402
+from app.core import redis as redis_module  # noqa: E402
+from app.core.config import Settings  # noqa: E402
+
 config_module.settings = Settings()
-from app.core import database as database_module
 database_module.settings = config_module.settings
 
 

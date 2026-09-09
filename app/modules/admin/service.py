@@ -1,6 +1,6 @@
 """管理员业务逻辑。"""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 import jwt
@@ -43,7 +43,7 @@ async def login(db: AsyncSession, username: str, password: str) -> dict:
         "1",
     )
 
-    admin.last_login = datetime.now(timezone.utc)
+    admin.last_login = datetime.now(UTC)
     await db.flush()
 
     return {
@@ -57,8 +57,8 @@ async def login(db: AsyncSession, username: str, password: str) -> dict:
 async def refresh(db: AsyncSession, refresh_token: str) -> dict:
     try:
         payload = decode_token(refresh_token)
-    except jwt.PyJWTError:
-        raise UnauthorizedException("Invalid refresh token")
+    except jwt.PyJWTError as err:
+        raise UnauthorizedException("Invalid refresh token") from err
 
     if payload.get("type") != "refresh":
         raise UnauthorizedException("Invalid refresh token")
@@ -99,8 +99,8 @@ async def refresh(db: AsyncSession, refresh_token: str) -> dict:
 async def logout(db: AsyncSession, refresh_token: str) -> None:
     try:
         payload = decode_token(refresh_token)
-    except jwt.PyJWTError:
-        raise UnauthorizedException("Invalid refresh token")
+    except jwt.PyJWTError as err:
+        raise UnauthorizedException("Invalid refresh token") from err
 
     if payload.get("type") != "refresh":
         raise UnauthorizedException("Invalid refresh token")

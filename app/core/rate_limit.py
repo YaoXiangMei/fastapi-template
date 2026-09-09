@@ -60,7 +60,10 @@ def make_rate_limiter(
 
     用法::
 
-        @router.post("/login", dependencies=[Depends(make_rate_limiter(max_requests=5, window_seconds=60))])
+        @router.post(
+            "/login",
+            dependencies=[Depends(make_rate_limiter(max_requests=5, window_seconds=60))],
+        )
         async def login(...):
             ...
     """

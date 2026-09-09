@@ -29,9 +29,7 @@ async def get_admin_permissions(db: AsyncSession, admin_id: UUID) -> set[str]:
     return permissions
 
 
-async def create_permission(
-    db: AsyncSession, data: PermissionCreate
-) -> AdminPermission:
+async def create_permission(db: AsyncSession, data: PermissionCreate) -> AdminPermission:
     """创建权限。"""
     perm = AdminPermission(**data.model_dump())
     db.add(perm)
@@ -78,17 +76,13 @@ async def assign_permissions_to_role(
     return role
 
 
-async def assign_roles_to_admin(
-    db: AsyncSession, admin_id: UUID, role_ids: list[UUID]
-) -> Admin:
+async def assign_roles_to_admin(db: AsyncSession, admin_id: UUID, role_ids: list[UUID]) -> Admin:
     """给管理员分配角色。"""
     admin = await db.get(Admin, admin_id)
     if not admin:
         raise NotFoundException("管理员不存在")
 
-    roles_result = await db.execute(
-        select(AdminRole).where(AdminRole.id.in_(role_ids))
-    )
+    roles_result = await db.execute(select(AdminRole).where(AdminRole.id.in_(role_ids)))
     admin.roles = list(roles_result.scalars().all())
     await db.flush()
     await db.refresh(admin)

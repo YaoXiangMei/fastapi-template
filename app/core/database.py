@@ -1,11 +1,15 @@
 """异步 SQLAlchemy 数据库引擎、会话和声明式基类。"""
 
+from collections.abc import AsyncGenerator
 from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from app.core.config import settings
 
 
 class Base(DeclarativeBase):
@@ -40,10 +44,6 @@ class TimestampMixin:
     )
 
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
-from app.core.config import settings
-
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.is_dev,
@@ -60,7 +60,7 @@ async_session_factory = async_sessionmaker(
 )
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """生成异步数据库会话的 FastAPI 依赖。"""
     async with async_session_factory() as session:
         try:

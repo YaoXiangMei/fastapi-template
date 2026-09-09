@@ -78,8 +78,8 @@ async def refresh(db: AsyncSession, refresh_token: str) -> dict:
     """刷新 token。"""
     try:
         payload = decode_token(refresh_token)
-    except jwt.PyJWTError:
-        raise UnauthorizedException("Invalid refresh token")
+    except jwt.PyJWTError as err:
+        raise UnauthorizedException("Invalid refresh token") from err
 
     if payload.get("type") != "refresh":
         raise UnauthorizedException("Invalid refresh token")
@@ -121,8 +121,8 @@ async def logout(db: AsyncSession, refresh_token: str) -> None:
     """登出，吊销 refresh token。"""
     try:
         payload = decode_token(refresh_token)
-    except jwt.PyJWTError:
-        raise UnauthorizedException("Invalid refresh token")
+    except jwt.PyJWTError as err:
+        raise UnauthorizedException("Invalid refresh token") from err
 
     if payload.get("type") != "refresh":
         raise UnauthorizedException("Invalid refresh token")

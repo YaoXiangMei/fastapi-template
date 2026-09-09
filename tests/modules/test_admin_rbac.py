@@ -34,11 +34,7 @@ async def test_admin_role_model(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_admin_permission_model(db_session: AsyncSession):
     """AdminPermission 模型可以创建。"""
-    perm = AdminPermission(
-        code="test:permission",
-        name="测试权限",
-        description="测试用"
-    )
+    perm = AdminPermission(code="test:permission", name="测试权限", description="测试用")
     db_session.add(perm)
     await db_session.flush()
     assert perm.id is not None
@@ -60,6 +56,7 @@ async def test_admin_role_assignment(db_session: AsyncSession):
 
     # 重新加载，使用 selectinload 避免懒加载
     from sqlalchemy.orm import selectinload
+
     result = await db_session.execute(
         select(Admin).options(selectinload(Admin.roles)).where(Admin.id == admin.id)
     )
@@ -84,8 +81,11 @@ async def test_role_permission_assignment(db_session: AsyncSession):
 
     # 重新加载，使用 selectinload 避免懒加载
     from sqlalchemy.orm import selectinload
+
     result = await db_session.execute(
-        select(AdminRole).options(selectinload(AdminRole.permissions)).where(AdminRole.id == role.id)
+        select(AdminRole)
+        .options(selectinload(AdminRole.permissions))
+        .where(AdminRole.id == role.id)
     )
     loaded_role = result.scalar_one()
     assert len(loaded_role.permissions) == 1
@@ -111,11 +111,7 @@ async def test_superuser_can_create_permission(
 
     resp = await client.post(
         "/api/v1/admin/permissions",
-        json={
-            "code": "test:permission",
-            "name": "测试权限",
-            "description": "测试用"
-        }
+        json={"code": "test:permission", "name": "测试权限", "description": "测试用"},
     )
     assert resp.status_code == 201
     body = resp.json()
@@ -144,7 +140,7 @@ async def test_non_superuser_cannot_create_permission(
         json={
             "code": "test:permission2",
             "name": "测试权限2",
-        }
+        },
     )
     assert resp.status_code == 403
 
@@ -227,9 +223,7 @@ async def test_superuser_bypasses_permission_check(
 
 
 @pytest.mark.asyncio
-async def test_list_permissions(
-    client: AsyncClient, db_session: AsyncSession, fake_redis
-):
+async def test_list_permissions(client: AsyncClient, db_session: AsyncSession, fake_redis):
     """可以列出所有权限。"""
     # 创建一些权限
     perm1 = AdminPermission(code="test:perm1", name="测试权限1")
@@ -258,9 +252,7 @@ async def test_list_permissions(
 
 
 @pytest.mark.asyncio
-async def test_create_role(
-    client: AsyncClient, db_session: AsyncSession, fake_redis
-):
+async def test_create_role(client: AsyncClient, db_session: AsyncSession, fake_redis):
     """超级管理员可以创建角色。"""
     super_admin = Admin(
         username="super_role",
@@ -275,11 +267,7 @@ async def test_create_role(
     client.headers["Authorization"] = f"Bearer {token}"
 
     resp = await client.post(
-        "/api/v1/admin/roles",
-        json={
-            "name": "测试角色",
-            "description": "测试用角色"
-        }
+        "/api/v1/admin/roles", json={"name": "测试角色", "description": "测试用角色"}
     )
     assert resp.status_code == 201
     body = resp.json()

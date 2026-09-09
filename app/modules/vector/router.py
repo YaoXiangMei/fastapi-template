@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.pagination import get_page_params, PageData
+from app.core.pagination import PageData, get_page_params
 from app.core.response import ApiResponse
 from app.modules.vector import service
 from app.modules.vector.schemas import (
@@ -38,9 +38,7 @@ async def list_documents(
     page_params=Depends(get_page_params),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    docs, total = await service.list_documents(
-        db, page_params.offset, page_params.limit
-    )
+    docs, total = await service.list_documents(db, page_params.offset, page_params.limit)
     return {
         "status": 1,
         "message": "success",

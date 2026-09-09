@@ -18,11 +18,7 @@ from app.modules.admin.models import Admin
 async def seed_admin():
     """创建初始管理员账号。"""
     async with async_session_factory() as db:
-        username = (
-            settings.SUPERUSER_EMAIL.split("@")[0]
-            if settings.SUPERUSER_EMAIL
-            else "admin"
-        )
+        username = settings.SUPERUSER_EMAIL.split("@")[0] if settings.SUPERUSER_EMAIL else "admin"
         password = settings.SUPERUSER_PASSWORD or "admin123456"
         email = settings.SUPERUSER_EMAIL or "admin@example.com"
 

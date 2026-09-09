@@ -1,6 +1,6 @@
 """安全工具：JWT 令牌和密码哈希。"""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -39,13 +39,13 @@ def create_access_token(
         extra_claims: 附加声明，如角色/超级用户状态。
         expires_minutes: 覆盖默认过期时间。
     """
-    expire = datetime.now(timezone.utc) + timedelta(
+    expire = datetime.now(UTC) + timedelta(
         minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     payload: dict[str, Any] = {
         "sub": subject,
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(UTC),
         "type": "access",
     }
     if extra_claims:
@@ -62,14 +62,12 @@ def create_refresh_token(
     该令牌以 jti 为键存储在 Redis 中，用于轮换/黑名单。
     """
     jti = str(uuid4())
-    expire = datetime.now(timezone.utc) + timedelta(
-        days=expires_days or settings.REFRESH_TOKEN_EXPIRE_DAYS
-    )
+    expire = datetime.now(UTC) + timedelta(days=expires_days or settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload: dict[str, Any] = {
         "sub": subject,
         "jti": jti,
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(UTC),
         "type": "refresh",
     }
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)

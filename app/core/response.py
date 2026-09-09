@@ -27,7 +27,7 @@ from pydantic import BaseModel
 T = TypeVar("T")
 
 
-class ApiResponse(BaseModel, Generic[T]):
+class ApiResponse(BaseModel, Generic[T]):  # noqa: UP046
     """统一响应模型。status=1 表示成功，status=0 表示失败。"""
 
     status: int = 1

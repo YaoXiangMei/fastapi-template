@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.modules.auth.schemas import RefreshRequest, TokenResponse
+from app.core.schemas import RefreshRequest, TokenResponse
 from app.modules.doctor import service
 from app.modules.doctor.deps import get_current_doctor
 from app.modules.doctor.models import Doctor

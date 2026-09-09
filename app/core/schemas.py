@@ -1,6 +1,6 @@
-"""认证模型。"""
+"""共享认证模式。"""
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class TokenResponse(BaseModel):
@@ -13,14 +13,6 @@ class TokenResponse(BaseModel):
 
 
 class RefreshRequest(BaseModel):
+    """刷新令牌请求。"""
+
     refresh_token: str
-
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: str | None = None
-
-
-class MessageResponse(BaseModel):
-    message: str

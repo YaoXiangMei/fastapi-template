@@ -10,7 +10,7 @@ from app.modules.admin import service
 from app.modules.admin.deps import get_current_admin
 from app.modules.admin.models import Admin
 from app.modules.admin.schemas import AdminRead
-from app.modules.auth.schemas import RefreshRequest, TokenResponse
+from app.core.schemas import RefreshRequest, TokenResponse
 
 router = APIRouter()
 

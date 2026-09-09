@@ -5,11 +5,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.pagination import get_page_params, PageData
 from app.core.response import ApiResponse
-from app.modules.user.models import User
 from app.modules.vector import service
 from app.modules.vector.schemas import (
     DocumentCreate,
@@ -25,7 +23,6 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 async def create_document(
     data: DocumentCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ) -> dict:
     """创建文档。向量嵌入根据内容自动生成。"""
     doc = await service.create_document(db, data)
@@ -40,7 +37,6 @@ async def create_document(
 async def list_documents(
     page_params=Depends(get_page_params),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ) -> dict:
     docs, total = await service.list_documents(
         db, page_params.offset, page_params.limit
@@ -61,7 +57,6 @@ async def list_documents(
 async def get_document(
     doc_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ) -> dict:
     doc = await service.get_document(db, doc_id)
     return {
@@ -75,7 +70,6 @@ async def get_document(
 async def delete_document(
     doc_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ) -> dict:
     await service.delete_document(db, doc_id)
     return {"status": 1, "message": "success", "data": None}
@@ -85,7 +79,6 @@ async def delete_document(
 async def search_documents(
     data: SearchRequest,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ) -> dict:
     """按语义相似度检索文档。"""
     results = await service.search_documents(db, data.query, data.top_k)

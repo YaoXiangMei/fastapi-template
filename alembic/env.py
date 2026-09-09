@@ -19,7 +19,6 @@ from app.core.database import Base
 from app.modules.admin.models import Admin  # noqa: F401
 from app.modules.doctor.models import Doctor  # noqa: F401
 from app.modules.patient.models import Patient  # noqa: F401
-from app.modules.user.models import Permission, Role, User, role_permission, user_role  # noqa: F401
 from app.modules.vector.models import Document  # noqa: F401
 
 # 这是 Alembic 配置对象

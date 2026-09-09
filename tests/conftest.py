@@ -18,7 +18,6 @@ from app.main import app
 from app.modules.admin.models import Admin  # noqa: F401
 from app.modules.doctor.models import Doctor  # noqa: F401
 from app.modules.patient.models import Patient  # noqa: F401
-from app.modules.user.models import Permission, Role, User, role_permission, user_role  # noqa: F401
 from app.modules.vector.models import Document  # noqa: F401
 from pgvector.sqlalchemy import Vector  # noqa: F401 - 为 create_all 注册类型
 
@@ -99,35 +98,3 @@ async def client(db_session, fake_redis) -> AsyncGenerator[AsyncClient, None]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
-
-
-# ── 辅助工具：已认证的客户端 ──────────────────────
-
-
-@pytest_asyncio.fixture
-async def auth_token(db_session) -> str:
-    """创建一个测试用户并返回一个访问令牌。"""
-    from app.core.security import create_access_token, hash_password
-    from app.modules.user.models import User
-
-    user = User(
-        email="testuser@example.com",
-        hashed_password=hash_password("testpass123"),
-        is_active=True,
-        is_superuser=True,
-    )
-    db_session.add(user)
-    await db_session.flush()
-
-    token = create_access_token(
-        subject=str(user.id),
-        extra_claims={"is_superuser": True},
-    )
-    return token
-
-
-@pytest_asyncio.fixture
-async def auth_client(client, auth_token) -> AsyncClient:
-    """提供已认证的异步 HTTP 客户端。"""
-    client.headers["Authorization"] = f"Bearer {auth_token}"
-    return client

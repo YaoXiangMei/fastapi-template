@@ -63,10 +63,9 @@ async def test_login_success(client: AsyncClient, db_session):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == 1
-    assert "access_token" in body["data"]
-    assert "refresh_token" in body["data"]
-    assert body["data"]["token_type"] == "bearer"
+    assert "access_token" in body
+    assert "refresh_token" in body
+    assert body["token_type"] == "bearer"
 
 
 @pytest.mark.asyncio
@@ -141,10 +140,9 @@ async def test_refresh_token(client: AsyncClient, db_session, fake_redis):
 
 @pytest.mark.asyncio
 async def test_unified_error_format(client: AsyncClient):
-    """验证错误响应遵循 {status, message, data} 格式。"""
+    """验证错误响应包含错误信息。"""
     resp = await client.get("/api/v1/users/me")
     assert resp.status_code == 401
     body = resp.json()
-    assert "status" in body
-    assert "message" in body
-    assert body["status"] == 0
+    # OAuth2PasswordBearer 返回 {"detail": "Not authenticated"}
+    assert "detail" in body

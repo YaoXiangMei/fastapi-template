@@ -18,7 +18,7 @@ from app.modules.user.service import get_user_by_id, get_user_permissions
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"/api/v1/auth/login",
-    auto_error=False,
+    auto_error=True,
 )
 
 

@@ -1,6 +1,5 @@
 """Pytest fixtures：测试数据库引擎/会话、fakeredis 和异步 HTTP 客户端。"""
 
-import asyncio
 import os
 from typing import AsyncGenerator
 
@@ -8,6 +7,7 @@ import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base, get_db
@@ -44,38 +44,25 @@ config_module.settings = Settings()
 from app.core import database as database_module
 database_module.settings = config_module.settings
 
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-test_session_factory = async_sessionmaker(
-    test_engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
-)
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """为所有测试创建单个事件循环。"""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database():
     """测试前创建所有表，测试后删除。"""
-    async with test_engine.begin() as conn:
-        # 启用 pgvector 扩展
-        from sqlalchemy import text
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
     yield
-    async with test_engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """提供一个事务性数据库会话，每个测试后回滚。"""
-    async with test_engine.connect() as conn:
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    async with engine.connect() as conn:
         await conn.begin()
         session = AsyncSession(bind=conn, expire_on_commit=False)
 
@@ -88,6 +75,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         app.dependency_overrides.pop(get_db, None)
         await session.close()
         await conn.rollback()
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture

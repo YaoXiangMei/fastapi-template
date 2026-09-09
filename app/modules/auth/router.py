@@ -33,7 +33,7 @@ async def register(
 
 @router.post(
     "/login",
-    response_model=ApiResponse[TokenResponse],
+    response_model=TokenResponse,
     dependencies=[Depends(make_rate_limiter(max_requests=5, window_seconds=60))],
 )
 async def login(
@@ -41,8 +41,7 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """使用邮箱 + 密码登录。返回访问令牌和刷新令牌。"""
-    tokens = await service.login(db, form.username, form.password)
-    return {"status": 1, "message": "success", "data": tokens}
+    return await service.login(db, form.username, form.password)
 
 
 @router.post("/refresh", response_model=ApiResponse[TokenResponse])

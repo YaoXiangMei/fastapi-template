@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import hash_password
@@ -21,12 +22,16 @@ from app.modules.user.schemas import (
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(
+        select(User).options(selectinload(User.roles)).where(User.email == email)
+    )
     return result.scalar_one_or_none()
 
 
 async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User:
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(
+        select(User).options(selectinload(User.roles)).where(User.id == user_id)
+    )
     user = result.scalar_one_or_none()
     if not user:
         raise NotFoundException("User not found")
@@ -45,6 +50,7 @@ async def create_user(db: AsyncSession, data: UserCreate) -> User:
     )
     db.add(user)
     await db.flush()
+    await db.refresh(user, attribute_names=["roles"])
     logger.info("Created user: {} ({})", user.email, user.id)
     return user
 
@@ -54,6 +60,7 @@ async def update_user(db: AsyncSession, user_id: UUID, data: UserUpdate) -> User
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(user, field, value)
     await db.flush()
+    await db.refresh(user, attribute_names=["roles", "updated_at"])
     return user
 
 

@@ -51,14 +51,18 @@
 # 1. 复制 Docker 环境变量文件
 cp .env.docker .env
 
-# 2. 启动所有服务
+# 2.（可选）修改端口，避免与已有项目冲突
+#    编辑 .env 中的 POSTGRES_PORT / REDIS_PORT / API_PORT
+#    例如：API_PORT=8001, POSTGRES_PORT=5433, REDIS_PORT=6380
+
+# 3. 启动所有服务
 docker compose up -d --build
 
-# 3. 初始化数据（权限 + 管理员账号）
+# 4. 初始化数据（权限 + 管理员账号）
 docker compose exec api python -m app.scripts.seed
 
-# 4. 访问文档
-open http://localhost:8000/docs
+# 5. 访问文档
+open http://localhost:${API_PORT:-8000}/docs
 ```
 
 ### 本地开发

@@ -32,19 +32,14 @@ def cleanup_expired_tokens() -> str:
 
     async def _cleanup():
         redis = get_redis()
-        # 扫描 refresh_token:* 键
         count = 0
         async for key in redis.scan_iter(match="refresh_token:*"):
             ttl = await redis.ttl(key)
-            if ttl == -2:  # 键不存在（已过期）
+            if ttl == -2:
                 count += 1
         return f"Cleaned up {count} expired tokens"
 
-    loop = asyncio.new_event_loop()
-    try:
-        result = loop.run_until_complete(_cleanup())
-    finally:
-        loop.close()
+    result = asyncio.run(_cleanup())
     print(f"[Celery Task] {result}")
     return result
 
@@ -66,5 +61,4 @@ def process_document_embedding(document_id: str, content: str) -> dict:
 
     embedding = generate_embedding(content)
     print(f"[Celery Task] Generated embedding for document {document_id} (dim={len(embedding)})")
-    # 生产环境中：用嵌入向量更新数据库中的文档
     return {"document_id": document_id, "embedding_dim": len(embedding)}

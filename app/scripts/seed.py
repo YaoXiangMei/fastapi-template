@@ -1,10 +1,18 @@
-"""种子脚本：创建默认权限、角色和超级用户。
+"""统一种子脚本：初始化权限、管理员账号。
 
 用法::
 
+    # 初始化所有数据（权限 + 管理员）
     python -m app.scripts.seed
+
+    # 仅初始化权限
+    python -m app.scripts.seed --permissions-only
+
+    # 仅初始化管理员
+    python -m app.scripts.seed --admin-only
 """
 
+import argparse
 import asyncio
 
 from sqlalchemy import select
@@ -13,123 +21,88 @@ from app.core.config import settings
 from app.core.database import async_session_factory
 from app.core.logging import logger, setup_logging
 from app.core.security import hash_password
-from app.modules.user.models import Permission, Role, User, role_permission
-from app.modules.user.service import get_user_by_email
+from app.modules.admin.models import Admin, AdminPermission
 
-DEFAULT_PERMISSIONS = [
-    ("users:read", "Read Users", "查看用户列表和详情"),
-    ("users:write", "Write Users", "创建、更新或删除用户"),
-    ("users:delete", "Delete Users", "删除用户"),
-    ("roles:manage", "Manage Roles", "创建、更新、删除角色并分配权限"),
-    ("documents:read", "Read Documents", "查看文档"),
-    ("documents:write", "Write Documents", "创建、更新或删除文档"),
-    ("documents:search", "Search Documents", "按相似度搜索文档"),
+# 预定义权限
+PERMISSIONS = [
+    # 医生管理
+    ("doctor:view", "查看医生", "查看医生列表和详情"),
+    ("doctor:approve", "审核医生", "审核新注册的医生"),
+    ("doctor:delete", "删除医生", "删除医生账号"),
+    # 患者管理
+    ("patient:view", "查看患者", "查看患者列表和详情"),
+    ("patient:delete", "删除患者", "删除患者账号"),
+    # 管理员管理
+    ("admin:create", "创建管理员", "创建新的管理员账号"),
+    ("admin:delete", "删除管理员", "删除管理员账号"),
+    # 角色权限管理
+    ("role:manage", "管理角色", "创建、编辑、删除角色"),
+    # 系统
+    ("system:config", "系统配置", "修改系统配置"),
+    ("report:view", "查看报表", "查看系统报表"),
+    ("data:export", "导出数据", "导出系统数据"),
 ]
 
 
-async def seed_permissions(db) -> None:
-    for code, name, desc in DEFAULT_PERMISSIONS:
-        result = await db.execute(select(Permission).where(Permission.code == code))
-        if result.scalar_one_or_none():
-            continue
-        perm = Permission(code=code, name=name, description=desc)
-        db.add(perm)
-        await db.flush()
-        logger.info("Created permission: {}", code)
-    await db.commit()
+async def seed_permissions() -> None:
+    """创建预定义权限。"""
+    async with async_session_factory() as db:
+        for code, name, description in PERMISSIONS:
+            result = await db.execute(select(AdminPermission).where(AdminPermission.code == code))
+            existing = result.scalar_one_or_none()
+            if existing:
+                logger.info("Permission already exists: {}", code)
+                continue
+            perm = AdminPermission(code=code, name=name, description=description)
+            db.add(perm)
+            logger.info("Created permission: {} - {}", code, name)
+        await db.commit()
+        logger.info("Permission seeding completed")
 
 
-async def seed_roles(db) -> None:
-    # 获取所有权限
-    result = await db.execute(select(Permission))
-    all_perms = list(result.scalars().all())
+async def seed_admin() -> None:
+    """创建初始管理员账号。"""
+    async with async_session_factory() as db:
+        username = settings.SUPERUSER_EMAIL.split("@")[0] if settings.SUPERUSER_EMAIL else "admin"
+        password = settings.SUPERUSER_PASSWORD or "admin123456"
+        email = settings.SUPERUSER_EMAIL or "admin@example.com"
 
-    # 管理员角色：拥有所有权限
-    result = await db.execute(select(Role).where(Role.code == "admin"))
-    admin_role = result.scalar_one_or_none()
-    if not admin_role:
-        admin_role = Role(
-            code="admin",
-            name="Administrator",
-            description="Full system access",
+        result = await db.execute(select(Admin).where(Admin.username == username))
+        existing = result.scalar_one_or_none()
+        if existing:
+            logger.info("Admin account already exists: {}", username)
+            return
+
+        admin = Admin(
+            username=username,
+            hashed_password=hash_password(password),
+            full_name="System Admin",
+            email=email,
+            is_superuser=True,
         )
-        db.add(admin_role)
-        await db.flush()
-        logger.info("Created role: admin")
-
-    # 为管理员角色分配权限（通过直接添加到关联表）
-    for perm in all_perms:
-        # 检查权限是否已分配给角色
-        stmt = select(role_permission).where(
-            role_permission.c.role_id == admin_role.id, role_permission.c.permission_id == perm.id
-        )
-        result = await db.execute(stmt)
-        if not result.first():
-            # 如果权限未分配，则添加关联
-            await db.execute(
-                role_permission.insert().values(role_id=admin_role.id, permission_id=perm.id)
-            )
-
-    # 用户角色：只读权限
-    result = await db.execute(select(Role).where(Role.code == "user"))
-    user_role = result.scalar_one_or_none()
-    if not user_role:
-        user_role = Role(
-            code="user",
-            name="Standard User",
-            description="Basic read access",
-        )
-        db.add(user_role)
-        await db.flush()
-        logger.info("Created role: user")
-
-    read_perms = [p for p in all_perms if p.code.endswith(":read") or p.code.endswith(":search")]
-    # 为用户角色分配只读权限
-    for perm in read_perms:
-        # 检查权限是否已分配给角色
-        stmt = select(role_permission).where(
-            role_permission.c.role_id == user_role.id, role_permission.c.permission_id == perm.id
-        )
-        result = await db.execute(stmt)
-        if not result.first():
-            # 如果权限未分配，则添加关联
-            await db.execute(
-                role_permission.insert().values(role_id=user_role.id, permission_id=perm.id)
-            )
-
-    await db.commit()
-
-
-async def seed_superuser(db) -> None:
-    existing = await get_user_by_email(db, settings.SUPERUSER_EMAIL)
-    if existing:
-        logger.info("Superuser already exists: {}", settings.SUPERUSER_EMAIL)
-        return
-
-    result = await db.execute(select(Role).where(Role.code == "admin"))
-    admin_role = result.scalar_one_or_none()
-
-    user = User(
-        email=settings.SUPERUSER_EMAIL,
-        hashed_password=hash_password(settings.SUPERUSER_PASSWORD),
-        is_active=True,
-        is_superuser=True,
-        full_name="Super Admin",
-    )
-    if admin_role:
-        user.roles = [admin_role]
-    db.add(user)
-    await db.commit()
-    logger.info("Created superuser: {}", settings.SUPERUSER_EMAIL)
+        db.add(admin)
+        await db.commit()
+        logger.info("Created admin account: {} ({})", username, email)
 
 
 async def main() -> None:
     setup_logging()
+
+    parser = argparse.ArgumentParser(description="Seed initial data")
+    parser.add_argument("--permissions-only", action="store_true", help="Only seed permissions")
+    parser.add_argument("--admin-only", action="store_true", help="Only seed admin")
+    args = parser.parse_args()
+
     logger.info("Starting seed script...")
-    async with async_session_factory() as db:
-        await seed_permissions(db)
-        await seed_roles(db)
-        await seed_superuser(db)
+
+    if args.permissions_only:
+        await seed_permissions()
+    elif args.admin_only:
+        await seed_admin()
+    else:
+        await seed_permissions()
+        await seed_admin()
+
     logger.info("Seed script completed!")
 
 

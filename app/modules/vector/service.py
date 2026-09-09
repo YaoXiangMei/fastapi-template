@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException
@@ -42,8 +42,8 @@ async def list_documents(
     )
     docs = list(result.scalars().all())
 
-    count_result = await db.execute(select(Document))
-    total = len(list(count_result.scalars().all()))
+    count_result = await db.execute(select(func.count(Document.id)))
+    total = count_result.scalar() or 0
     return docs, total
 
 
@@ -62,7 +62,6 @@ async def search_documents(db: AsyncSession, query: str, top_k: int = 5) -> list
     query_embedding = generate_embedding(query)
 
     # pgvector 余弦距离运算符：'<=>'
-    # 使用 select 同时查询模型和距离表达式
     stmt = (
         select(
             Document,
@@ -83,7 +82,7 @@ async def search_documents(db: AsyncSession, query: str, top_k: int = 5) -> list
                 "id": doc.id,
                 "title": doc.title,
                 "content": doc.content,
-                "score": round(1 - float(distance), 4),  # 将距离转换为相似度
+                "score": round(1 - float(distance), 4),
             }
         )
 

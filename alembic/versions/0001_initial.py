@@ -1,8 +1,8 @@
-"""初始迁移：pgvector 扩展 + 所有表。
+"""initial migration - all current tables.
 
-修订 ID：0001_initial
-前序版本：
-创建日期：2026-09-07
+Revision ID: 0001_initial
+Revises:
+Create Date: 2026-09-09
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,6 @@ from alembic import op
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects.postgresql import UUID
 
-# 修订标识符，由 Alembic 使用。
 revision: str = "0001_initial"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -20,78 +19,202 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 启用 pgvector 扩展
+    # pgvector extension
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-    # ── 用户表 ──
+    # ── patients ──
     op.create_table(
-        "users",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
+        "patients",
         sa.Column("email", sa.String(255), nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
         sa.Column("full_name", sa.String(255), nullable=True),
-        sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.text("true")),
-        sa.Column("is_superuser", sa.Boolean, nullable=False, server_default=sa.text("false")),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.UniqueConstraint("email"),
+        sa.Column("phone", sa.String(20), nullable=True),
+        sa.Column("gender", sa.String(10), nullable=True),
+        sa.Column("birth_date", sa.Date(), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_users_email", "users", ["email"])
+    op.create_index("ix_patients_email", "patients", ["email"], unique=True)
 
-    # ── 角色表 ──
+    # ── doctors ──
     op.create_table(
-        "roles",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("code", sa.String(50), nullable=False),
+        "doctors",
+        sa.Column("email", sa.String(255), nullable=False),
+        sa.Column("hashed_password", sa.String(255), nullable=False),
+        sa.Column("full_name", sa.String(255), nullable=True),
+        sa.Column("phone", sa.String(20), nullable=True),
+        sa.Column("license_no", sa.String(50), nullable=False),
+        sa.Column("specialty", sa.String(100), nullable=True),
+        sa.Column("department", sa.String(100), nullable=True),
+        sa.Column("title", sa.String(50), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "is_verified", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_doctors_email", "doctors", ["email"], unique=True)
+    op.create_index("ix_doctors_license_no", "doctors", ["license_no"], unique=True)
+
+    # ── admins ──
+    op.create_table(
+        "admins",
+        sa.Column("username", sa.String(100), nullable=False),
+        sa.Column("hashed_password", sa.String(255), nullable=False),
+        sa.Column("full_name", sa.String(255), nullable=True),
+        sa.Column("email", sa.String(255), nullable=True),
+        sa.Column("phone", sa.String(20), nullable=True),
+        sa.Column("last_login", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "is_superuser", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_admins_username", "admins", ["username"], unique=True)
+
+    # ── admin_roles ──
+    op.create_table(
+        "admin_roles",
         sa.Column("name", sa.String(100), nullable=False),
-        sa.Column("description", sa.String(500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.UniqueConstraint("code"),
+        sa.Column("description", sa.Text(), nullable=True),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_roles_code", "roles", ["code"])
 
-    # ── 权限表 ──
+    # ── admin_permissions ──
     op.create_table(
-        "permissions",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
+        "admin_permissions",
         sa.Column("code", sa.String(100), nullable=False),
-        sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("description", sa.String(500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.UniqueConstraint("code"),
+        sa.Column("name", sa.String(100), nullable=False),
+        sa.Column("description", sa.Text(), nullable=True),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_permissions_code", "permissions", ["code"])
+    op.create_index(
+        "ix_admin_permissions_code", "admin_permissions", ["code"], unique=True
+    )
 
-    # ── 关联表：user_role ──
+    # ── admin_role_assignments (M2M: admins ↔ admin_roles) ──
     op.create_table(
-        "user_role",
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("role_id", UUID(as_uuid=True), sa.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
+        "admin_role_assignments",
+        sa.Column(
+            "admin_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("admins.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "role_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("admin_roles.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("admin_id", "role_id"),
     )
 
-    # ── 关联表：role_permission ──
+    # ── admin_role_permissions (M2M: admin_roles ↔ admin_permissions) ──
     op.create_table(
-        "role_permission",
-        sa.Column("role_id", UUID(as_uuid=True), sa.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("permission_id", UUID(as_uuid=True), sa.ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+        "admin_role_permissions",
+        sa.Column(
+            "role_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("admin_roles.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "permission_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("admin_permissions.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("role_id", "permission_id"),
     )
 
-    # ── 文档表（pgvector）──
+    # ── documents (pgvector) ──
     op.create_table(
         "documents",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
         sa.Column("title", sa.String(500), nullable=False),
-        sa.Column("content", sa.Text, nullable=False),
+        sa.Column("content", sa.Text(), nullable=False),
         sa.Column("embedding", Vector(1536), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("id", UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-
-    # 用于相似度搜索的向量索引（使用 ivfflat 进行余弦距离计算）
-    # 注意：请根据数据集大小调整 nlist。对于小数据集，普通索引即可；
-    # 对于大数据集，请使用 hnsw。
     op.execute(
         "CREATE INDEX IF NOT EXISTS documents_embedding_idx "
         "ON documents USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)"
@@ -99,9 +222,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_table("admin_role_permissions")
+    op.drop_table("admin_role_assignments")
+    op.drop_index("ix_admin_permissions_code", table_name="admin_permissions")
+    op.drop_table("admin_permissions")
+    op.drop_table("admin_roles")
+    op.drop_index("ix_admins_username", table_name="admins")
+    op.drop_table("admins")
+    op.drop_index("ix_doctors_license_no", table_name="doctors")
+    op.drop_index("ix_doctors_email", table_name="doctors")
+    op.drop_table("doctors")
+    op.drop_index("ix_patients_email", table_name="patients")
+    op.drop_table("patients")
     op.drop_table("documents")
-    op.drop_table("role_permission")
-    op.drop_table("user_role")
-    op.drop_table("permissions")
-    op.drop_table("roles")
-    op.drop_table("users")

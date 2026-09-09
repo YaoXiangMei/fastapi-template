@@ -1,5 +1,6 @@
 """通用认证依赖工厂。"""
 
+from collections.abc import Callable
 from typing import Type
 from uuid import UUID
 
@@ -14,7 +15,9 @@ from app.core.exceptions import UnauthorizedException
 from app.core.security import decode_token
 
 
-def create_auth_dependency(model: Type, token_url: str):
+def create_auth_dependency(
+    model: Type, token_url: str
+) -> tuple[OAuth2PasswordBearer, Callable]:
     """为特定角色创建 OAuth2 认证依赖。
 
     Args:
@@ -42,8 +45,13 @@ def create_auth_dependency(model: Type, token_url: str):
         if not user_id:
             raise UnauthorizedException("Invalid token")
 
+        try:
+            user_uuid = UUID(user_id)
+        except (ValueError, AttributeError):
+            raise UnauthorizedException("Invalid token")
+
         result = await db.execute(
-            select(model).where(model.id == UUID(user_id))
+            select(model).where(model.id == user_uuid)
         )
         user = result.scalar_one_or_none()
 

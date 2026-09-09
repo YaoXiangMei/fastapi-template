@@ -15,6 +15,9 @@ from app.core.redis import get_redis
 from app.main import app
 
 # 导入所有模型以创建表
+from app.modules.admin.models import Admin  # noqa: F401
+from app.modules.doctor.models import Doctor  # noqa: F401
+from app.modules.patient.models import Patient  # noqa: F401
 from app.modules.user.models import Permission, Role, User, role_permission, user_role  # noqa: F401
 from app.modules.vector.models import Document  # noqa: F401
 from pgvector.sqlalchemy import Vector  # noqa: F401 - 为 create_all 注册类型

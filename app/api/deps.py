@@ -16,8 +16,14 @@ from app.core.security import decode_token
 from app.modules.user.models import User
 from app.modules.user.service import get_user_by_id, get_user_permissions
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"/api/v1/auth/login",
+
+# 创建自定义子类以生成唯一的 OpenAPI 安全方案名称
+class UserAuth(OAuth2PasswordBearer):
+    pass
+
+
+oauth2_scheme = UserAuth(
+    tokenUrl="/api/v1/auth/login",
     auto_error=True,
 )
 

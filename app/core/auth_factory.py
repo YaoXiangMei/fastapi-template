@@ -16,18 +16,28 @@ from app.core.security import decode_token
 
 
 def create_auth_dependency(
-    model: Type, token_url: str
+    model: Type, token_url: str, scheme_name: str | None = None
 ) -> tuple[OAuth2PasswordBearer, Callable]:
     """为特定角色创建 OAuth2 认证依赖。
 
     Args:
         model: SQLAlchemy 用户模型类（Patient/Doctor/Admin）
         token_url: Swagger UI 的登录端点路径
+        scheme_name: OpenAPI 安全方案名称（用于区分不同角色）
 
     Returns:
         tuple: (oauth2_scheme, get_current_user_dependency)
     """
-    scheme = OAuth2PasswordBearer(tokenUrl=token_url, auto_error=True)
+    # 创建自定义子类以生成唯一的 OpenAPI 安全方案名称
+    if scheme_name:
+        scheme_class = type(
+            scheme_name,
+            (OAuth2PasswordBearer,),
+            {"__init__": lambda self, **kwargs: OAuth2PasswordBearer.__init__(self, **kwargs)},
+        )
+        scheme = scheme_class(tokenUrl=token_url, auto_error=True)
+    else:
+        scheme = OAuth2PasswordBearer(tokenUrl=token_url, auto_error=True)
 
     async def dependency(
         token: str = Depends(scheme),

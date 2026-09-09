@@ -6,6 +6,7 @@ from app.modules.patient.models import Patient
 oauth2_scheme, get_current_patient = create_auth_dependency(
     Patient,
     token_url="/api/v1/patient/login",
+    scheme_name="PatientAuth",
 )
 
 __all__ = ["oauth2_scheme", "get_current_patient"]

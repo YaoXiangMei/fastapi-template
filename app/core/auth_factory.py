@@ -16,7 +16,10 @@ from app.core.security import decode_token
 
 
 def create_auth_dependency(
-    model: Type, token_url: str, scheme_name: str | None = None
+    model: Type,
+    token_url: str,
+    scheme_name: str | None = None,
+    require_permissions: list[str] | None = None,
 ) -> tuple[OAuth2PasswordBearer, Callable]:
     """为特定角色创建 OAuth2 认证依赖。
 
@@ -24,6 +27,7 @@ def create_auth_dependency(
         model: SQLAlchemy 用户模型类（Patient/Doctor/Admin）
         token_url: Swagger UI 的登录端点路径
         scheme_name: OpenAPI 安全方案名称（用于区分不同角色）
+        require_permissions: 需要的权限码列表（仅 Admin 支持）
 
     Returns:
         tuple: (oauth2_scheme, get_current_user_dependency)
@@ -60,9 +64,7 @@ def create_auth_dependency(
         except (ValueError, AttributeError):
             raise UnauthorizedException("Invalid token")
 
-        result = await db.execute(
-            select(model).where(model.id == user_uuid)
-        )
+        result = await db.execute(select(model).where(model.id == user_uuid))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -75,6 +77,20 @@ def create_auth_dependency(
             raise UnauthorizedException(
                 "Account not verified, please wait for admin approval"
             )
+
+        # 权限检查（仅 Admin 支持）
+        if require_permissions and model.__name__ == "Admin":
+            # 超级管理员跳过权限检查
+            if not getattr(user, "is_superuser", False):
+                from app.modules.admin.rbac_service import get_admin_permissions
+
+                user_perms = await get_admin_permissions(db, user.id)
+                if not set(require_permissions).issubset(user_perms):
+                    from app.core.exceptions import ForbiddenException
+
+                    raise ForbiddenException(
+                        f"权限不足，需要: {', '.join(require_permissions)}"
+                    )
 
         return user
 

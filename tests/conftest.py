@@ -15,7 +15,7 @@ from app.core.redis import get_redis
 from app.main import app
 
 # 导入所有模型以创建表
-from app.modules.admin.models import Admin  # noqa: F401
+from app.modules.admin.models import Admin, AdminRole, AdminPermission, admin_role_assignments, admin_role_permissions  # noqa: F401
 from app.modules.doctor.models import Doctor  # noqa: F401
 from app.modules.patient.models import Patient  # noqa: F401
 from app.modules.vector.models import Document  # noqa: F401

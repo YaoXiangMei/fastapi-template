@@ -1,4 +1,6 @@
-name: fastapi-template
+# 项目名称默认为目录名，多项目时自动隔离容器名称
+# 如需显式指定，取消注释并修改：
+# name: my-project
 
 services:
   postgres:
